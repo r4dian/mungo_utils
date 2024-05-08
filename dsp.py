@@ -27,19 +27,19 @@ def multi_to_mono(multi,mix=True):
 def normalize(mono,limit=4,prop=0.25):
     #skip pass begining transients
     skip = np.int32(len(mono)*prop)
-    print('normalization skipping past %s samples'%skip)
+    print(('normalization skipping past %s samples'%skip))
     #center the average of the signal
-    print('audio array of %s'%type(mono[0]))    
+    print(('audio array of %s'%type(mono[0])))    
     c = np.int32(np.int32(round(np.mean(mono[skip:]),0)))
-    print('amplitude center at %s correcting for DC offset'%c)
+    print(('amplitude center at %s correcting for DC offset'%c))
     for i in range(len(mono)): #hard clipping on  the transients
         mono[i] = min(np.iinfo(np.int32).max-limit,mono[i]-c,max(np.iinfo(np.int32).min+limit,mono[i]-c))
     max_pos = np.argmax(np.abs(mono))
-    print('file peak at position %s'%max_pos)
+    print(('file peak at position %s'%max_pos))
     #high pass the audio
     mono = fft_high_pass(mono)
     c = np.int32(np.int32(round(np.mean(mono),0)))
-    print('correction of amplitude center now at %s correcting for DC offset'%c)
+    print(('correction of amplitude center now at %s correcting for DC offset'%c))
     return mono
 
 #trim the start of the audio array if it is below the threashold
@@ -49,8 +49,8 @@ def trim(mono,start_threshold=512,stop_threshold=48,min_samples=96):
     while j > 0 and np.abs(mono[j])           <= stop_threshold:  j -= 1
     #now check the indecies
     if i < j and j-i > min_samples:
-        print('trimed to sample start %s'%i)
-        print('trimed to sample end %s'%j)
+        print(('trimed to sample start %s'%i))
+        print(('trimed to sample end %s'%j))
         return mono[i:j]
     else:
         return mono
@@ -93,7 +93,7 @@ def butter_highpass_filter(data):
 #up or down samples based on the target samples
 #using scipy.signal.resample which is an FFT based resampling method (which is slow but decent sounding)
 def resample(mono,target,module):
-    print('resampled to %sHz'%target[module])
+    print(('resampled to %sHz'%target[module]))
     resampled_data = sps.resample(mono,target[module]).astype('i4')
     return resampled_data    
 
@@ -190,7 +190,7 @@ def phase_vocoder(mono, sr, N=2048, tscale= 1.0):
     p = 0
     pp = 0    
     while p < L-(N+H):
-        if p%1024==0: print '.',
+        if p%1024==0: print('.', end=' ')
         # take the spectra of two consecutive windows
         p1 = int(p)
         spec1 =  np.fft.fft(win*mono[p1:p1+N])
@@ -252,6 +252,6 @@ def pitch_shifter(mono, pitch, time):
     
     fund = 131.
     dsize = int(sr/(fund*0.5))
-    print dsize
+    print(dsize)
     signalout = pitchshifter(signalin,signalout,pitch,dsize)
     wavfile.write(sys.argv[3],sr,array((signalout+signalin)/2., dtype='int16'))

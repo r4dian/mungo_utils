@@ -38,5 +38,5 @@ mu.gen_W0_WTs(mungo_out_dir,
               WTs=10,
               buffersize=int(4E3),
               C=[0,1,0,20,100,1],
-              h_range=range(1,64,2),
+              h_range=list(range(1,64,2)),
               plot=True)

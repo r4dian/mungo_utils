@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #Timothy Becker, 25/07/2016 version 0.0
+# Andy S, 2024-05-08 version 0.1 
 
 import argparse
 import os
@@ -23,7 +24,7 @@ def read_aifs_or_wavs(in_dir,
                       phase=False,
                       rev=False,
                       fade=256,
-                      target={'G0':500000,'S0':200000,'W0':4000,'C0':12000}):
+                      target={'G0':500000,'S0':200000,'W0':4000,'C0':12000, 'C1':49000}):
     audio_files = []
     for ext in exts:
         audio_files += glob.glob(in_dir+'/*.'+ext) #load the extensions that we want
@@ -31,7 +32,7 @@ def read_aifs_or_wavs(in_dir,
     data,err,ns = [],[],[]
     for audio_file in audio_files:
         try:
-            print('processing %s'%audio_file) #search for aif style file extension
+            print(('processing %s'%audio_file)) #search for aif style file extension
             is_aif = audio_file.rsplit('.')[-1].upper().find('AIF')>-1
             is_wav = audio_file.rsplit('.')[-1].upper().find('WAV')>-1
             if not is_aif and not is_wav: #extension not supported
@@ -52,10 +53,10 @@ def read_aifs_or_wavs(in_dir,
             pass
     if len(err)>0:
         print('Conversion errors with the following supported files:')
-        for i in err: print i
+        for i in err: print(i)
     if len(ns)>0:
         print('The following files have unsupported file types:')
-        for i in ns: print i
+        for i in ns: print(i)
     return data
     
 #write a directory of audio files to mono WAV 16-bit integer
@@ -64,15 +65,18 @@ def read_aifs_or_wavs(in_dir,
 def write_mungo(out_dir,
                 data,
                 module='G0',
-                prefix={'G0':'W','S0':'S','C0':'W','W0':'W'}):
+                prefix={'G0':'W','S0':'S','W0':'W', 'C0':'W', 'C1':'W'}):
     if not os.path.exists(out_dir): os.makedirs(out_dir)
     j = 0
+    divisor = 16 if module == 'C1' else 10  
     for i in range(len(data)):
-        if j%10==0: #make a new directory if needed
-            j,last_dir = 0,out_dir+'/'+str(i/10)+'/'
+        if j%divisor==0: #make a new directory if needed
+            j,last_dir = 0,out_dir+'/'+str(int(i/divisor))+'/'
         if not os.path.exists(last_dir):
             os.makedirs(last_dir)
-        wavio.write(last_dir+prefix[module]+str(j)+'.wav',data[i],len(data[i]),sampwidth=2)
+        id = str(hex(j).lstrip("0x")).upper()
+        if id == '': id = '0'
+        wavio.write(last_dir+prefix[module]+id+'.wav',data[i],len(data[i]),sampwidth=2)
         j += 1
     return True
 
@@ -117,7 +121,7 @@ def gen_C0_IRs(out_dir,IRs=100,buffersize=int(12E3),rev_prob=0.1,types=['EXP','H
         j += 1
     return True
 
-def gen_W0_WTs(out_dir,WTs=10,buffersize=int(4E3),C=[0,0,0,1,1,1],h_range=range(10),plot=False):
+def gen_W0_WTs(out_dir,WTs=10,buffersize=int(4E3),C=[0,0,0,1,1,1],h_range=list(range(10)),plot=False):
     if not os.path.exists(out_dir): os.makedirs(out_dir)
     data = []
     for i in range(WTs):
@@ -147,7 +151,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=overview)
     parser.add_argument('-I', '--audio_input_dir',type=str, help='audio directory to search\t[required]')
     parser.add_argument('-E', '--audio_ext',type=str, help='either or aif and wav audio extensions to convert\t[aif,wav]')
-    parser.add_argument('-T', '--target_mungo_module',type=str, help='the mungo target module to write to\t[G0=500K]')
+    parser.add_argument('-T', '--target_mungo_module',type=str, help='the mungo target module to write to.\tCan be one of G0, S0, W0, C0, C1\t[G0=500K]')
     parser.add_argument('-O', '--mungo_output_dir',type=str, help='mungo output directory\t[required]')
     #DSP arguments for optional processing
     parser.add_argument('-m', '--mix',action='store_true', help='mix multiple channels\t[False]')
@@ -160,14 +164,14 @@ if __name__ == '__main__':
     #check all the options and set defaults that have not been specified
     if args.audio_input_dir is not None:
         in_dir = args.audio_input_dir
-        print('using audio input directory:\n%s'%in_dir)
+        print(('using audio input directory:\n%s'%in_dir))
     else:
-        print('input directory not specified')
+        print('input directory not specified with -I')
         raise IOError
     if args.mungo_output_dir is not None:
         mungo_out_dir = args.mungo_output_dir
     else:
-        print('mungo output directory not specified')
+        print('mungo output directory not specified with -O')
         raise IOError
     if args.audio_ext is not None:
         exts = args.audio_ext.split(',') #comman seperated list
