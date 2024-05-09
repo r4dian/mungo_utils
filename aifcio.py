@@ -42,7 +42,7 @@ __version__ = "0.0.4.dev0"
 def _aifc2array(nchannels, sampwidth, rate, data):
     """data must be the string containing the bytes from the aif file."""
     num_samples, remainder = divmod(len(data), sampwidth * nchannels)
-    print(('%s audio channels detected'%nchannels))
+    print('%s audio channels detected'%nchannels)
     if remainder > 0:
         raise ValueError('The length of data is not a multiple of '
                          'sampwidth * num_channels.')
@@ -51,15 +51,15 @@ def _aifc2array(nchannels, sampwidth, rate, data):
 
     if sampwidth == 3:
         print("24 bit sample depth detected")
-        print(("%sHz sample rate detected"%rate))
+        print("%sHz sample rate detected"%rate)
         a = _np.empty((num_samples, nchannels, 4), dtype=_np.uint8)
         raw_bytes = _np.fromstring(data, dtype=_np.uint8).byteswap() #
         a[:, :, :sampwidth] = raw_bytes.reshape(-1, nchannels, sampwidth)
         a[:, :, sampwidth:] = (a[:, :, sampwidth - 1:sampwidth] >> 7) * 255
         result = a.view('<i4').reshape(a.shape[:-1]).byteswap()
     else:
-        print(("%s bit sample depth detected"%(sampwidth*8)))
-        print(("%sHz sample rate detected"%rate))
+        print("%s bit sample depth detected"%(sampwidth*8))
+        print("%sHz sample rate detected"%rate)
         # 8 bit samples are stored as unsigned ints; others as signed ints.
         dt_char = 'u' if sampwidth == 1 else 'i'
         a = _np.fromstring(data, dtype='<%s%d' % (dt_char, sampwidth))

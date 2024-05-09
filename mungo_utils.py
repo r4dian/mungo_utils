@@ -32,7 +32,7 @@ def read_aifs_or_wavs(in_dir,
     data,err,ns = [],[],[]
     for audio_file in audio_files:
         try:
-            print(('processing %s'%audio_file)) #search for aif style file extension
+            print('processing %s'%audio_file) #search for aif style file extension
             is_aif = audio_file.rsplit('.')[-1].upper().find('AIF')>-1
             is_wav = audio_file.rsplit('.')[-1].upper().find('WAV')>-1
             if not is_aif and not is_wav: #extension not supported
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     #check all the options and set defaults that have not been specified
     if args.audio_input_dir is not None:
         in_dir = args.audio_input_dir
-        print(('using audio input directory:\n%s'%in_dir))
+        print('using audio input directory:\n%s'%in_dir)
     else:
         print('input directory not specified with -I')
         raise IOError
