@@ -24,7 +24,7 @@ def read_aifs_or_wavs(in_dir,
                       phase=False,
                       rev=False,
                       fade=256,
-                      target={'G0':500000,'S0':200000,'W0':4000,'C0':12000, 'C1':49000}):
+                      target={'C0':12000, 'C1':49000, 'G0':500000, 'G0V2':500000, 'S0':200000,'W0':4000}):
     audio_files = []
     for ext in exts:
         audio_files += glob.glob(in_dir+'/*.'+ext) #load the extensions that we want
@@ -42,6 +42,7 @@ def read_aifs_or_wavs(in_dir,
                 elif is_wav: mono,rate = dsp.multi_to_mono(wavio.read(audio_file),mix)     #convert to mono
             if trim:  mono = dsp.trim(mono)
             if phase: mono = dsp.phase_vocoder(mono,rate,1024,1.0*target[module]/rate)     #timestretching via PV
+            print (target)
             resampled = dsp.resample(mono,target,module)                                   #up/down sample
             if norm: resampled = dsp.normalize(resampled)                                  #normalize and clean final result
             if fade > 0: resampled = dsp.fade_out(resampled,fade)                          #exp fade out
@@ -65,10 +66,10 @@ def read_aifs_or_wavs(in_dir,
 def write_mungo(out_dir,
                 data,
                 module='G0',
-                prefix={'G0':'W','S0':'S','W0':'W', 'C0':'W', 'C1':'W'}):
+                prefix={'C0':'W', 'C1':'W', 'G0':'W', 'G0V2':'W', 'S0':'S','W0':'W'}):
     if not os.path.exists(out_dir): os.makedirs(out_dir)
     j = 0
-    divisor = 16 if module == 'C1' else 10  
+    divisor = 16 if module in {'C1', 'G0V2'} else 10  
     for i in range(len(data)):
         if j%divisor==0: #make a new directory if needed
             j,last_dir = 0,out_dir+'/'+str(int(i/divisor))+'/'
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=overview)
     parser.add_argument('-I', '--audio_input_dir',type=str, help='audio directory to search\t[required]')
     parser.add_argument('-E', '--audio_ext',type=str, help='either or aif and wav audio extensions to convert\t[aif,wav]')
-    parser.add_argument('-T', '--target_mungo_module',type=str, help='the mungo target module to write to.\tCan be one of G0, S0, W0, C0, C1\t[G0=500K]')
+    parser.add_argument('-T', '--target_mungo_module',type=str, help='the mungo target module to write to.\tCan be one of C0, C1, G0, G0V2 S0, W0\t[G0=500K]')
     parser.add_argument('-O', '--mungo_output_dir',type=str, help='mungo output directory\t[required]')
     #DSP arguments for optional processing
     parser.add_argument('-m', '--mix',action='store_true', help='mix multiple channels\t[False]')
@@ -174,7 +175,7 @@ if __name__ == '__main__':
         print('mungo output directory not specified with -O')
         raise IOError
     if args.audio_ext is not None:
-        exts = args.audio_ext.split(',') #comman seperated list
+        exts = args.audio_ext.split(',') #comma seperated list
     else:
         exts = ['aif','wav']
     
@@ -189,7 +190,7 @@ if __name__ == '__main__':
         fade = 96
     
     if args.target_mungo_module is not None:
-        module = args.target_mungo_module
+        module = args.target_mungo_module.upper()
     else:
         module = 'G0'    
     #now batch process all the inputs and autogenerate the mungo WAV files
